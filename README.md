@@ -24,8 +24,76 @@ I decided that it was best to implement 220 resistors, since they are safe and a
 ![resistors](https://github.com/Ruben249/Vending-Machine/assets/102288264/81d17d79-c596-4fef-9fd4-e36685864b1a)
 
 
-
 #### Development
+The first step to program sensors and actuators is to import the corresponding libraries and assign each sensor a Pin on the board. My distribution has been the following:
+``` cpp
+#include <DHT.h>
+
+#include <avr/wdt.h>
+
+#include <Thread.h>
+#include <StaticThreadController.h>
+#include <ThreadController.h>
+
+#include <LiquidCrystal.h>
+
+// Definition of sensors pins
+LiquidCrystal lcd(12, 11, 5, 4, 6, 2);
+
+#define ledPIN_BLUE 10
+#define ledPIN_RED A2
+
+#define JOYSTICK_X A0
+#define JOYSTICK_Y A1
+#define JOYSTICK_BUTTON 7
+
+#define pinTrigger 8
+#define pinEcho 9
+
+#define buttonPin 3
+
+#define DHTPIN 13
+
+```
+
+Then you have to assign each one in the setup() if they are an input or output pin:
+``` cpp
+void setup() {
+  Serial.begin(9600);  //iniciar puerto serie
+
+  pinMode(ledPIN_RED, OUTPUT);  
+  pinMode(ledPIN_BLUE, OUTPUT);  
+
+  pinMode(DHTPIN, INPUT); 
+
+  pinMode(pinTrigger, OUTPUT);  
+  pinMode(pinEcho, INPUT);      
+
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  // we configure the push button pin as an input with pullup
+  pinMode(JOYSTICK_BUTTON, INPUT_PULLUP);
+
+  dht.begin();
+
+  lcd.begin(16, 2);
+
+  startTime = millis();
+
+  startSequence();
+
+  buttonThread.enabled = true;
+  buttonThread.setInterval(1000);
+  buttonThread.onRun(resetblink);
+
+  threadcontroller.add(&buttonThread);
+
+  // We deactivate the watchdog
+  wdt_disable();
+  wdt_enable(WDTO_8S);
+}
+```
+
 The next step I decided to do was to make each menu in a general way, in which there was only Serial.print to see a basic operation. I also decided to include turning the LEDs on and off, since it was something simple and would encourage me to continue. Once I had the structure, I developed each of the parts of the menu separately, executing only each part of the menu, such as the part that allows us to dynamically see the temperature and humidity, the part of changing the prices, the part of the accountant, etc. it only executed one by calling it in the main loop constantly.
 
 Once they all worked separately, I decided to put them together in a function that had a switch and depending on the one I received, which depended on the option chosen by the Joystick previously, I executed one function or another
@@ -79,7 +147,8 @@ void setup(){
 
 void lopp(){
  /*
-  We execute the thread controller. In this case it only launches one, which is the one that checks if the button has been pressed or not.
+  We execute the thread controller. In this case it only launches one, which is the one that checks
+  if the button has been pressed or not.
   */
   threadcontroller.run();
 }
@@ -119,4 +188,31 @@ bool prices_controller = false;
 
 // With this boolean we keep in the product selection menu.
 bool drink_controller = false;
+```
+
+As you can see below, in the loop we only restart the watchdog, call the thread controller that executes the thread that checks if the button has been pressed and check if we are admin or service:
+
+``` cpp
+// Main loop to switch between service and admin modes
+void loop() {
+  /*
+  If after 8 seconds it has not gone through the main loop again, 
+  it means that it has gotten stuck somewhere, so we use the watchdog to avoid it.
+  */
+  wdt_reset();
+
+  /*
+  We execute the thread controller.
+  In this case it only launches one, which is the one that checks if the button has been pressed or not.
+  */
+  threadcontroller.run();
+  if (admin_mode == false) {
+    exitAdminMode();
+    serviceMode();
+  } 
+  else {
+    enterAdminMode();
+    adminMode();
+  }
+}
 ```
