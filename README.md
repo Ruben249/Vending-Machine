@@ -10,6 +10,8 @@
 
 -[Final](#final)
 
+-[Video](#video)
+
 
 #### Start
 First I decided to start designing a circuit in Tinker Card, to make sure I did not generate any short circuits and that all the components were well assembled.
@@ -90,7 +92,6 @@ void setup() {
 
   // We deactivate the watchdog
   wdt_disable();
-  wdt_enable(WDTO_8S);
 }
 ```
 
@@ -164,7 +165,7 @@ Another problem was that the function that prints the LCD waiting for the Client
 
 First I decided to do everything with whiles, which at first seemed simpler, but created the possibility of getting stuck in one of them, since taking into account that the loop is a while, I ended up having 3 nested whiles, so I decided to change everything and add the boolean variables to only execute the part of the code that I wanted.
 
-I decided to add a Watch Dog, to prevent it from getting stuck somewhere in the code. The mistake I made at the beginning was that in the lopp I put wdt_enable(WDTO_8S); so it always restarted, until I realized and put it in the setup and in the loop only wdt_reset() remained.
+I have decided to implement a watchdog when it shows the service mode temperature to prevent it from staying there constantly.
 
 Another problem I had was that sometimes the ultrasound reader did not correctly detect whether there was a client or not, so I decided to try removing the cables from the way and that's how I got it to read it perfectly. Here I attach a photo of the circuit final with all its modifications:
 ![ultrasonic_image](https://github.com/Ruben249/Vending-Machine/assets/102288264/7174bd58-9284-468f-9999-08218e337d0a)
@@ -216,3 +217,9 @@ void loop() {
   }
 }
 ```
+
+#### Video
+
+Below I leave a short 3 minute video showing how the vending machine works:
+
+https://youtu.be/yH5qorsUqjA
